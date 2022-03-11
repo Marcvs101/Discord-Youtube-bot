@@ -44,7 +44,7 @@ class youtube_cog(commands.Cog):
             self.is_playing = True
 
             # Connect to VC
-            if (self.vc == "") or (not self.vc.is_connected()) or (type(self.vc) == type(None)):
+            if (self.vc == "") or (not self.vc.is_connected()) or (type(self.vc) == type(None)) or (self.vc == None):
                 self.vc = await self.youtube_queue[0][1].connect()
             else:
                 self.vc = await self.vc.move_to(self.youtube_queue[0][1])
