@@ -1,4 +1,6 @@
+from pydoc import describe
 import discord
+from discord import app_commands
 from discord.ext import commands
 
 from youtube_dl import YoutubeDL
@@ -56,41 +58,51 @@ class youtube_cog(commands.Cog):
             self.is_playing = False
 
 
-    @commands.command()
-    async def play(self, ctx, url):
-        voice_channel = ctx.author.voice.channel
 
-        if voice_channel is None:
-            await ctx.send("Connettiti a un canale vocale")
+    @app_commands.command(name = "play", description = "play url")
+    @app_commands.describe(youtube_url = "youtube url to play")
+    async def play(self, interaction: discord.Interaction, youtube_url: str):
+        print(f"{interaction.user.name} requested {youtube_url}")
+
+        if interaction.user.voice is None:
+            await interaction.response.send_message("Connettiti a un canale vocale")
+        
         else:
-            song = self.search_yt(url)
+            voice_channel = interaction.user.voice.channel
+            song = self.search_yt(youtube_url)
             if type(song) == type(False):
-                await ctx.send("URL non trovato")
+                await interaction.response.send_message("URL non trovato")
             else:
-                print(ctx.author.name)
-                await ctx.send("Traccia aggiunta alla lista")
+                await interaction.response.send_message("Traccia aggiunta alla lista")
                 self.youtube_queue.append([song,voice_channel])
 
                 if self.is_playing == False:
                     await self.play_music()
 
 
-    @commands.command()
-    async def queue(self, ctx):
+    @app_commands.command(name = "queue", description = "show queue")
+    async def queue(self, interaction: discord.Interaction):
         retval = ""
         for i in range(len(self.youtube_queue)):
             retval += self.youtube_queue[i][0]["title"]+"\n"
 
         if retval != "":
-            await ctx.send(retval)
+            await interaction.response.send_message(retval)
         else:
-            await ctx.send("Coda vuota")
+            await interaction.response.send_message("Coda vuota")
 
 
-    @commands.command()
-    async def skip(self, ctx):
+    @app_commands.command(name = "skip", description = "skip track")
+    async def skip(self, interaction: discord.Interaction):
         if self.vc != "":
-            await ctx.send("Skippando")
+            await interaction.response.send_message("Skippando")
             self.vc.stop()
             self.vc == ""
             await self.play_music()
+        else:
+            await interaction.response.send_message("Qualcosa è andato storto, non sono in un canale vocale")
+
+
+
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(youtube_cog(bot))
